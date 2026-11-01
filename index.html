@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Bag</title>
+<meta name="description" content="The Bag sells stylish bags in Lagos. See the bags and prices, then order on WhatsApp.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: black and white boutique. Big word mark, bag grid as the centre of the page, order steps, contact. */
+:root {
+  --ink: #0b0b0b;
+  --paper: #ffffff;
+  --grey: #8a8a8a;
+  --soft: #f2f2f2;
+  --line: #d9d9d9;
+  --f-display: "Syne", "Arial Black", sans-serif;
+  --f-body: "DM Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 16px/1.55 var(--f-body);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding-left: 18px; padding-right: 18px; }
+a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.bar { background: var(--ink); color: var(--paper); text-align: center; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; padding: 8px 12px; }
+
+header.top { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; gap: 12px; }
+.logo { font: 800 24px/1 var(--f-display); letter-spacing: -.01em; }
+.top nav { display: flex; gap: 16px; font-size: 14px; font-weight: 700; }
+.top nav a { color: var(--ink); text-decoration: none; border-bottom: 2px solid transparent; }
+.top nav a:hover { border-color: var(--ink); }
+
+.hero { background: var(--ink); color: var(--paper); padding: 48px 0 40px; overflow: hidden; }
+.hero small { letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: #bdbdbd; }
+.hero h1 { font: 800 clamp(56px, 18vw, 120px)/.9 var(--f-display); letter-spacing: -.03em; margin: 12px 0 16px; }
+.hero h1 span { display: block; -webkit-text-stroke: 1.5px var(--paper); color: transparent; }
+.hero p { max-width: 36ch; font-size: 18px; color: #e8e8e8; margin: 0 0 24px; }
+.btn { display: inline-block; background: var(--paper); color: var(--ink); font: 700 17px var(--f-body); text-decoration: none; padding: 15px 26px; border-radius: 0; border: 2px solid var(--paper); transition: background .2s, color .2s; }
+.btn:hover { background: transparent; color: var(--paper); }
+.btn.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.dark:hover { background: transparent; color: var(--ink); }
+
+section { padding: 44px 0 8px; scroll-margin-top: 12px; }
+h2 { font: 800 clamp(28px, 7vw, 38px)/1.02 var(--f-display); letter-spacing: -.02em; margin: 0 0 8px; }
+.lead { color: #555; margin: 0 0 22px; }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.bag { display: block; }
+.pic { aspect-ratio: 4 / 5; background: var(--soft); display: grid; place-items: center; overflow: hidden; }
+.pic svg { width: 78%; height: auto; transition: transform .3s; }
+.bag:hover .pic svg { transform: scale(1.06) rotate(-2deg); }
+.bag h3 { font: 700 16px var(--f-body); margin: 10px 0 0; }
+.bag .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: #555; font-size: 15px; }
+.bag .price { font: 800 17px var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.hint { color: var(--grey); font-size: 14px; margin: 16px 0 0; }
+
+.why { display: grid; gap: 0; border-top: 2px solid var(--ink); }
+.why div { display: grid; grid-template-columns: 52px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.why b { font: 800 22px var(--f-display); }
+
+ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; display: grid; gap: 0; border-top: 2px solid var(--ink); }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 52px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+ol.steps li::before { content: counter(s); font: 800 22px var(--f-display); }
+
+.contact { background: var(--ink); color: var(--paper); padding: 40px 0; margin-top: 44px; }
+.contact h2 { color: var(--paper); }
+.contact p { margin: 0 0 6px; color: #e8e8e8; }
+.contact .num { font: 800 clamp(24px, 7vw, 34px)/1.1 var(--f-display); margin: 12px 0 18px; display: block; }
+footer { padding: 18px 0 32px; font-size: 13px; color: var(--grey); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero h1, .hero p, .hero .btn { animation: rise .7s both; }
+  .hero p { animation-delay: .12s; } .hero .btn { animation-delay: .24s; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="bar">Free delivery in Lagos on orders above ₦30,000</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">THE BAG</div>
+    <nav aria-label="Page links">
+      <a href="#bags">Bags</a>
+      <a href="#order">Order</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+</div>
+
+<section class="hero" style="padding-top:48px">
+  <div class="wrap">
+    <small>Lagos · Bags for every day</small>
+    <h1>THE<span>BAG</span></h1>
+    <p>Carry your style. Totes, crossbody bags, backpacks and clutches, picked for how good they look and how long they last.</p>
+    <a class="btn" href="https://wa.me/2348000000000?text=Hello%20The%20Bag%2C%20I%20want%20to%20order%20a%20bag" target="_blank" rel="noopener">Order on WhatsApp</a>
+  </div>
+</section>
+
+<div class="wrap">
+  <section id="bags">
+    <h2>Our bags</h2>
+    <p class="lead">Tap WhatsApp, tell us the bag you like, and we confirm it the same day.</p>
+    <div class="grid">
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="Black tote bag">
+            <path d="M38 38 C38 6 82 6 82 38" fill="none" stroke="#0b0b0b" stroke-width="5" stroke-linecap="round"/>
+            <path d="M20 40 H100 L108 122 H12 Z" fill="#0b0b0b"/>
+            <rect x="50" y="58" width="20" height="8" rx="2" fill="#fff"/>
+          </svg>
+        </div>
+        <h3>City Tote</h3>
+        <div class="row"><span>Black</span><span class="price">₦28,000</span></div>
+      </div>
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="White crossbody bag">
+            <path d="M20 10 C40 70 80 70 100 10" fill="none" stroke="#0b0b0b" stroke-width="4" stroke-linecap="round"/>
+            <rect x="26" y="60" width="68" height="50" rx="8" fill="#fff" stroke="#0b0b0b" stroke-width="4"/>
+            <path d="M26 74 H94" stroke="#0b0b0b" stroke-width="4"/>
+            <circle cx="60" cy="84" r="5" fill="#0b0b0b"/>
+          </svg>
+        </div>
+        <h3>Cross Mini</h3>
+        <div class="row"><span>White</span><span class="price">₦22,000</span></div>
+      </div>
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="Black backpack">
+            <path d="M44 24 C44 4 76 4 76 24" fill="none" stroke="#0b0b0b" stroke-width="5" stroke-linecap="round"/>
+            <rect x="24" y="22" width="72" height="98" rx="26" fill="#0b0b0b"/>
+            <rect x="40" y="70" width="40" height="30" rx="8" fill="none" stroke="#fff" stroke-width="3"/>
+            <path d="M40 48 H80" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Day Pack</h3>
+        <div class="row"><span>Black</span><span class="price">₦35,000</span></div>
+      </div>
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="White clutch bag">
+            <rect x="12" y="40" width="96" height="56" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="4"/>
+            <path d="M12 54 L60 78 L108 54" fill="none" stroke="#0b0b0b" stroke-width="4" stroke-linejoin="round"/>
+            <circle cx="60" cy="78" r="5" fill="#0b0b0b"/>
+          </svg>
+        </div>
+        <h3>Evening Clutch</h3>
+        <div class="row"><span>White</span><span class="price">₦18,000</span></div>
+      </div>
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="Black bucket bag">
+            <path d="M34 36 C34 4 86 4 86 36" fill="none" stroke="#0b0b0b" stroke-width="5" stroke-linecap="round"/>
+            <path d="M26 38 H94 L86 118 H34 Z" fill="#0b0b0b"/>
+            <path d="M26 38 H94" stroke="#fff" stroke-width="3"/>
+            <circle cx="60" cy="74" r="6" fill="#fff"/>
+          </svg>
+        </div>
+        <h3>Bucket Bag</h3>
+        <div class="row"><span>Black</span><span class="price">₦26,000</span></div>
+      </div>
+
+      <div class="bag">
+        <div class="pic">
+          <svg viewBox="0 0 120 130" role="img" aria-label="White shoulder bag">
+            <path d="M30 40 C30 -2 90 -2 90 40" fill="none" stroke="#0b0b0b" stroke-width="5" stroke-linecap="round"/>
+            <path d="M16 44 H104 L96 112 H24 Z" fill="#fff" stroke="#0b0b0b" stroke-width="4" stroke-linejoin="round"/>
+            <path d="M16 62 H104" stroke="#0b0b0b" stroke-width="4"/>
+            <rect x="52" y="54" width="16" height="16" rx="3" fill="#0b0b0b"/>
+          </svg>
+        </div>
+        <h3>Shoulder Classic</h3>
+        <div class="row"><span>White</span><span class="price">₦30,000</span></div>
+      </div>
+
+    </div>
+    <p class="hint">Example bags and prices. More colours and sizes available, just ask.</p>
+  </section>
+
+  <section id="why">
+    <h2>Why shop with us</h2>
+    <p class="lead">Simple promises we keep.</p>
+    <div class="why">
+      <div><b>01</b><span><strong>Good quality.</strong> Strong stitching and zips we test before they reach you.</span></div>
+      <div><b>02</b><span><strong>Delivery in Lagos and nationwide.</strong> We pack carefully and send the same week.</span></div>
+      <div><b>03</b><span><strong>Easy swaps.</strong> If the bag is not what you ordered, tell us within 2 days.</span></div>
+    </div>
+  </section>
+
+  <section id="order">
+    <h2>How to order</h2>
+    <p class="lead">Three easy steps.</p>
+    <ol class="steps">
+      <li><span>Pick the bag you like from the list above.</span></li>
+      <li><span>Message us on WhatsApp with the bag name and your area.</span></li>
+      <li><span>Pay by bank transfer, and we deliver to your door.</span></li>
+    </ol>
+  </section>
+</div>
+
+<div class="contact" id="contact">
+  <div class="wrap">
+    <h2>Say hello</h2>
+    <p>Ask about colours, sizes and delivery to your area.</p>
+    <span class="num">080 0000 0000</span>
+    <a class="btn" href="https://wa.me/2348000000000?text=Hello%20The%20Bag%2C%20I%20want%20to%20order%20a%20bag" target="_blank" rel="noopener">Chat on WhatsApp</a>
+    <p style="margin-top:20px">Lagos, Nigeria · Open Monday to Saturday, 9am to 7pm</p>
+  </div>
+</div>
+
+<div class="wrap"><footer>© The Bag · Sample website · Not a real business</footer></div>
+
+</body>
+</html>
