@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>The Bag | Seller panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+:root {
+  --ink: #0b0b0b; --paper: #ffffff; --grey: #6f6f6f; --soft: #f2f2f2; --line: #d9d9d9; --ok: #0a7a3d; --bad: #b3261e;
+  --f-display: "Syne", "Arial Black", sans-serif; --f-body: "DM Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--soft); color: var(--ink); font: 16px/1.5 var(--f-body); }
+.wrap { max-width: 560px; margin: 0 auto; padding: 0 16px 60px; }
+header { background: var(--ink); color: var(--paper); }
+header .wrap { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; padding-bottom: 16px; gap: 12px; }
+.logo { font: 800 20px/1 var(--f-display); }
+header a, header button { color: var(--paper); font: 700 14px var(--f-body); background: none; border: 0; text-decoration: underline; cursor: pointer; padding: 6px 0; }
+h1 { font: 800 28px/1.1 var(--f-display); margin: 24px 0 6px; letter-spacing: -.01em; }
+h2 { font: 800 20px/1.1 var(--f-display); margin: 0 0 14px; }
+.lead { color: var(--grey); margin: 0 0 18px; }
+.card { background: var(--paper); border: 2px solid var(--ink); padding: 18px; margin: 18px 0; }
+label { display: block; font-weight: 700; font-size: 14px; margin: 14px 0 6px; }
+input, select, textarea { width: 100%; font: 16px var(--f-body); padding: 12px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 0; }
+input[type=file] { padding: 10px; }
+button.main { width: 100%; margin-top: 18px; padding: 15px; background: var(--ink); color: var(--paper); border: 2px solid var(--ink); font: 700 17px var(--f-body); cursor: pointer; }
+button.main:disabled { opacity: .5; cursor: wait; }
+.msg { margin: 12px 0 0; font-weight: 700; min-height: 1.5em; }
+.msg.ok { color: var(--ok); } .msg.bad { color: var(--bad); }
+.preview { display: none; width: 100%; max-height: 260px; object-fit: contain; background: var(--soft); margin-top: 10px; border: 1px solid var(--line); }
+.item { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.item:last-child { border-bottom: 0; }
+.item img, .item .ph { width: 64px; height: 64px; object-fit: cover; background: var(--soft); }
+.item b { display: block; overflow-wrap: anywhere; }
+.item span { color: var(--grey); font-size: 14px; }
+.item button { font: 700 14px var(--f-body); border: 2px solid var(--bad); background: var(--paper); color: var(--bad); padding: 9px 12px; cursor: pointer; }
+.item button.sure { background: var(--bad); color: var(--paper); }
+.item .acts { display: flex; flex-direction: column; gap: 8px; }
+.item button.edit { border-color: var(--ink); color: var(--ink); }
+button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: var(--paper); color: var(--ink); border: 2px solid var(--ink); font: 700 16px var(--f-body); cursor: pointer; }
+.hint { color: var(--grey); font-size: 14px; margin: 6px 0 0; font-weight: 400; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">THE BAG · SELLER</div>
+    <div>
+      <a href="shop.html">View shop</a>
+      <button id="logout" type="button" hidden>Log out</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- Log in -->
+  <div id="login" hidden>
+    <h1>Seller login</h1>
+    <p class="lead">Only the shop owner can open this panel.</p>
+    <form class="card" id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button class="main" type="submit">Log in</button>
+      <p class="msg" id="loginMsg"></p>
+    </form>
+  </div>
+
+  <!-- Panel -->
+  <div id="panel" hidden>
+    <h1>Your shop</h1>
+    <p class="lead">Add a bag and it shows on your website straight away.</p>
+
+    <form class="card" id="addForm">
+      <h2 id="formTitle">Add a bag</h2>
+      <label for="photo" id="photoLabel">Photo</label>
+      <input id="photo" type="file" accept="image/*" required>
+      <img id="preview" class="preview" alt="Photo preview">
+
+      <label for="name">Name</label>
+      <input id="name" type="text" maxlength="60" required placeholder="For example, City Tote">
+
+      <label for="price">Price (naira)</label>
+      <input id="price" type="number" inputmode="numeric" min="1" step="1" required placeholder="For example, 28000">
+
+      <label for="colour">Colour</label>
+      <input id="colour" type="text" maxlength="30" list="colours" required placeholder="For example, Black">
+      <datalist id="colours"><option>Black</option><option>White</option><option>Brown</option><option>Red</option><option>Blue</option></datalist>
+
+      <label for="tag">Label (optional)</label>
+      <select id="tag"><option value="">No label</option><option>New</option><option>Best seller</option><option>Sold out soon</option></select>
+
+      <label for="note">Short note (optional)</label>
+      <input id="note" type="text" maxlength="90" placeholder="For example, Fits a laptop">
+
+      <button class="main" id="saveBtn" type="submit">Save bag</button>
+      <button class="ghost" id="cancelEdit" type="button" hidden>Cancel editing</button>
+      <p class="msg" id="addMsg"></p>
+    </form>
+
+    <div class="card">
+      <h2>Bags on your website</h2>
+      <div id="list"><p class="lead">Loading…</p></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var sb = window.supabase.createClient(window.SHOP.url, window.SHOP.key);
+  var BUCKET = 'product-photos';
+
+  function view(name) {
+    $('login').hidden = name !== 'login';
+    $('panel').hidden = name !== 'panel';
+    $('logout').hidden = name !== 'panel';
+  }
+  function say(el, text, kind) { el.textContent = text; el.className = 'msg' + (kind ? ' ' + kind : ''); }
+  function money(n) { return '₦' + Number(n).toLocaleString('en-NG'); }
+
+  // Log in / out
+  $('loginForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    say($('loginMsg'), 'Logging in…');
+    sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value }).then(function (r) {
+      if (r.error) { say($('loginMsg'), 'Could not log in. Check your email and password.', 'bad'); return; }
+      say($('loginMsg'), '');
+      $('password').value = '';
+      view('panel'); loadList();
+    });
+  });
+  $('logout').addEventListener('click', function () { sb.auth.signOut().then(function () { view('login'); }); });
+
+  // Photo preview
+  $('photo').addEventListener('change', function () {
+    var f = $('photo').files[0], p = $('preview');
+    if (!f) { p.style.display = 'none'; return; }
+    p.src = URL.createObjectURL(f); p.style.display = 'block';
+  });
+
+  // Make the photo smaller before uploading (saves storage and loads fast on mobile data)
+  function shrink(file) {
+    return new Promise(function (resolve) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var s = Math.min(1, 1000 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { URL.revokeObjectURL(url); resolve(b || file); }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+
+  // Add a bag, or save changes to a bag (edit mode)
+  var editing = null;
+
+  function removeFile(url) {
+    var part = url ? url.split('/' + BUCKET + '/')[1] : null;
+    if (part) { sb.storage.from(BUCKET).remove([part]); }
+  }
+
+  function stopEdit() {
+    editing = null;
+    $('addForm').reset();
+    $('photo').required = true;
+    $('preview').style.display = 'none';
+    $('formTitle').textContent = 'Add a bag';
+    $('photoLabel').textContent = 'Photo';
+    $('saveBtn').textContent = 'Save bag';
+    $('cancelEdit').hidden = true;
+  }
+
+  function startEdit(b) {
+    editing = b;
+    $('name').value = b.name || '';
+    $('price').value = b.price || '';
+    $('colour').value = b.colour || '';
+    $('tag').value = b.tag || '';
+    $('note').value = b.note || '';
+    $('photo').value = '';
+    $('photo').required = false;
+    if (b.image_url) { $('preview').src = b.image_url; $('preview').style.display = 'block'; }
+    $('formTitle').textContent = 'Edit bag';
+    $('photoLabel').textContent = 'New photo (leave empty to keep the current one)';
+    $('saveBtn').textContent = 'Update bag';
+    $('cancelEdit').hidden = false;
+    say($('addMsg'), '');
+    $('addForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  $('cancelEdit').addEventListener('click', function () { stopEdit(); say($('addMsg'), ''); });
+
+  $('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var file = $('photo').files[0];
+    var price = parseInt($('price').value, 10);
+    if (!file && !editing) { say($('addMsg'), 'Please choose a photo.', 'bad'); return; }
+    if (!(price > 0)) { say($('addMsg'), 'Please type a price.', 'bad'); return; }
+    $('saveBtn').disabled = true;
+    var wasEditing = !!editing;
+    var oldUrl = editing ? editing.image_url : null;
+
+    // 1. Photo: upload a new one, or keep the old one
+    var getUrl;
+    if (file) {
+      say($('addMsg'), 'Uploading photo…');
+      getUrl = shrink(file).then(function (blob) {
+        var path = Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+        return sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type || 'image/jpeg' }).then(function (up) {
+          if (up.error) throw up.error;
+          return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        });
+      });
+    } else {
+      getUrl = Promise.resolve(oldUrl);
+    }
+
+    // 2. Save the details
+    getUrl.then(function (url) {
+      say($('addMsg'), 'Saving…');
+      var rec = {
+        name: $('name').value.trim(), price: price, colour: $('colour').value.trim(),
+        tag: $('tag').value || null, note: $('note').value.trim() || null, image_url: url
+      };
+      return wasEditing ? sb.from('products').update(rec).eq('id', editing.id) : sb.from('products').insert(rec);
+    }).then(function (r) {
+      if (r.error) throw r.error;
+      if (wasEditing && file) removeFile(oldUrl);
+      stopEdit();
+      say($('addMsg'), wasEditing ? 'Updated. Your website shows the change.' : 'Saved. It is now on your website.', 'ok');
+      loadList();
+    }).catch(function (err) {
+      say($('addMsg'), 'Could not save: ' + (err && err.message ? err.message : 'try again'), 'bad');
+    }).then(function () { $('saveBtn').disabled = false; });
+  });
+
+  // The list, with delete (tap twice to confirm)
+  function loadList() {
+    sb.from('products').select('*').order('created_at', { ascending: false }).then(function (r) {
+      var box = $('list'); box.innerHTML = '';
+      if (r.error) { box.textContent = 'Could not load your bags.'; return; }
+      if (!r.data.length) { var p = document.createElement('p'); p.className = 'lead'; p.textContent = 'No bags yet. Add your first one above.'; box.appendChild(p); return; }
+      r.data.forEach(function (b) {
+        var row = document.createElement('div'); row.className = 'item';
+        if (b.image_url) { var im = document.createElement('img'); im.src = b.image_url; im.alt = ''; row.appendChild(im); }
+        else { var ph = document.createElement('div'); ph.className = 'ph'; row.appendChild(ph); }
+        var mid = document.createElement('div');
+        var nm = document.createElement('b'); nm.textContent = b.name;
+        var sub = document.createElement('span'); sub.textContent = [b.colour, money(b.price)].filter(Boolean).join(' · ');
+        mid.appendChild(nm); mid.appendChild(sub); row.appendChild(mid);
+        var del = document.createElement('button'); del.type = 'button'; del.textContent = 'Delete';
+        del.addEventListener('click', function () {
+          if (!del.classList.contains('sure')) {
+            del.classList.add('sure'); del.textContent = 'Sure?';
+            setTimeout(function () { del.classList.remove('sure'); del.textContent = 'Delete'; }, 4000);
+            return;
+          }
+          del.disabled = true; del.textContent = '…';
+          sb.from('products').delete().eq('id', b.id).then(function (d) {
+            if (d.error) { del.disabled = false; del.textContent = 'Delete'; return; }
+            removeFile(b.image_url);
+            loadList();
+          });
+        });
+        var acts = document.createElement('div'); acts.className = 'acts';
+        var ed = document.createElement('button'); ed.type = 'button'; ed.className = 'edit'; ed.textContent = 'Edit';
+        ed.addEventListener('click', function () { startEdit(b); });
+        acts.appendChild(ed); acts.appendChild(del); row.appendChild(acts);
+        box.appendChild(row);
+      });
+    });
+  }
+
+  // Start: already logged in?
+  sb.auth.getSession().then(function (r) {
+    if (r.data && r.data.session) { view('panel'); loadList(); } else { view('login'); }
+  });
+})();
+</script>
+</body>
+</html>
