@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Bag</title>
+<meta name="description" content="The Bag sells stylish bags in Lagos. See the bags and prices, then order on Telegram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: black and white boutique. Strip, big floating bag in the hero, filterable bag grid with per-bag order buttons,
+   promises, order steps, questions, contact, and a WhatsApp bar fixed to the bottom of the screen. */
+:root {
+  --ink: #0b0b0b;
+  --paper: #ffffff;
+  --grey: #8a8a8a;
+  --soft: #f2f2f2;
+  --line: #d9d9d9;
+  --f-display: "Syne", "Arial Black", sans-serif;
+  --f-body: "DM Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 var(--f-body); padding-bottom: 74px; overflow-x: hidden; }
+.wrap { max-width: 720px; margin: 0 auto; padding-left: 18px; padding-right: 18px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+/* scrolling strip */
+.strip { background: var(--ink); color: var(--paper); overflow: hidden; border-bottom: 1px solid #333; }
+.strip div { display: flex; width: max-content; padding: 10px 0; font: 700 12.5px var(--f-body); letter-spacing: .14em; text-transform: uppercase; }
+.strip span { padding: 0 20px; white-space: nowrap; }
+.strip span::after { content: "✦"; margin-left: 40px; }
+
+header.top { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; gap: 12px; }
+.logo { font: 800 24px/1 var(--f-display); letter-spacing: -.01em; }
+.top nav { display: flex; gap: 16px; font-size: 14px; font-weight: 700; }
+.top nav a { color: var(--ink); text-decoration: none; border-bottom: 2px solid transparent; }
+.top nav a:hover { border-color: var(--ink); }
+
+/* hero */
+.hero { background: var(--ink); color: var(--paper); padding: 44px 0 0; overflow: hidden; }
+.hero small { letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: #bdbdbd; }
+.hero h1 { font: 800 clamp(56px, 18vw, 120px)/.9 var(--f-display); letter-spacing: -.03em; margin: 12px 0 16px; }
+.hero h1 span { display: block; -webkit-text-stroke: 1.5px var(--paper); color: transparent; }
+.hero p { max-width: 36ch; font-size: 18px; color: #e8e8e8; margin: 0 0 24px; }
+.btn { display: inline-block; background: var(--paper); color: var(--ink); font: 700 17px var(--f-body); text-decoration: none; padding: 15px 26px; border: 2px solid var(--paper); cursor: pointer; transition: background .2s, color .2s; }
+.btn:hover { background: transparent; color: var(--paper); }
+.btn.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.dark:hover { background: transparent; color: var(--ink); }
+.hero-art { display: block; width: min(78%, 360px); margin: 10px auto -2px; height: auto; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; font-size: 14px; color: #cfcfcf; }
+.facts b { color: var(--paper); }
+
+section { padding: 44px 0 8px; scroll-margin-top: 12px; }
+h2 { font: 800 clamp(28px, 7vw, 38px)/1.02 var(--f-display); letter-spacing: -.02em; margin: 0 0 8px; }
+.lead { color: #555; margin: 0 0 18px; }
+
+/* filter chips */
+.chips { display: flex; gap: 8px; margin: 0 0 18px; flex-wrap: wrap; }
+.chip { font: 700 14px var(--f-body); background: var(--paper); color: var(--ink); border: 2px solid var(--ink); padding: 8px 16px; border-radius: 999px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; }
+@media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.bag[hidden] { display: none; }
+.pic { position: relative; aspect-ratio: 4 / 5; background: var(--soft); display: grid; place-items: center; overflow: hidden; }
+.pic img { width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; transition: transform .35s; }
+.bag:hover .pic img { transform: scale(1.05); }
+.tag { position: absolute; top: 10px; left: 10px; background: var(--ink); color: var(--paper); font: 800 10.5px var(--f-body); letter-spacing: .1em; text-transform: uppercase; padding: 5px 9px; }
+.bag h3 { font: 700 16px var(--f-body); margin: 10px 0 0; }
+.bag .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: #555; font-size: 15px; }
+.bag .price { font: 800 17px var(--f-display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.order { display: block; margin-top: 10px; text-align: center; text-decoration: none; font: 700 14px var(--f-body); color: var(--ink); border: 2px solid var(--ink); padding: 10px; transition: background .2s, color .2s; }
+.order:hover { background: var(--ink); color: var(--paper); }
+.hint { color: var(--grey); font-size: 14px; margin: 16px 0 0; }
+
+.why, ol.steps { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--ink); }
+.why div, ol.steps li { display: grid; grid-template-columns: 52px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.why b { font: 800 22px var(--f-display); }
+ol.steps { counter-reset: s; }
+ol.steps li { counter-increment: s; }
+ol.steps li::before { content: counter(s); font: 800 22px var(--f-display); }
+
+.faq details { border-bottom: 1px solid var(--line); padding: 14px 0; }
+.faq details:first-of-type { border-top: 2px solid var(--ink); }
+.faq summary { font-weight: 700; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font: 800 22px/1 var(--f-display); }
+.faq details[open] summary::after { content: "–"; }
+.faq p { margin: 10px 0 0; color: #555; }
+
+.contact { background: var(--ink); color: var(--paper); padding: 40px 0; margin-top: 44px; }
+.contact h2 { color: var(--paper); }
+.contact p { margin: 0 0 6px; color: #e8e8e8; }
+.contact .num { font: 800 clamp(24px, 7vw, 34px)/1.1 var(--f-display); margin: 12px 0 18px; display: block; }
+footer { padding: 18px 0 32px; font-size: 13px; color: var(--grey); }
+
+/* bar fixed to the bottom */
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--paper); border-top: 2px solid var(--ink); padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; justify-content: space-between; gap: 12px; z-index: 20; }
+.bar span { font-weight: 700; font-size: 14px; line-height: 1.2; }
+.bar a { background: var(--ink); color: var(--paper); text-decoration: none; font: 700 15px var(--f-body); padding: 12px 20px; white-space: nowrap; }
+
+/* motion */
+.reveal { transition: opacity .6s, transform .6s; }
+.js .reveal:not(.in) { opacity: 0; transform: translateY(22px); }
+@media (prefers-reduced-motion: no-preference) {
+  .strip div { animation: slide 26s linear infinite; }
+  .hero h1, .hero p, .hero .btn { animation: rise .7s both; }
+  .hero p { animation-delay: .12s; } .hero .btn { animation-delay: .24s; }
+  .hero-art { animation: float 5s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) { .js .reveal:not(.in) { opacity: 1; transform: none; } }
+@keyframes slide { to { transform: translateX(-50%); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-12px) rotate(2deg); } }
+</style>
+</head>
+<body>
+
+<div class="strip" aria-hidden="true">
+  <div>
+    <span>New arrivals</span><span>Free delivery in Lagos above ₦30,000</span><span>Pay on delivery in Lagos</span><span>Easy swaps within 2 days</span>
+    <span>New arrivals</span><span>Free delivery in Lagos above ₦30,000</span><span>Pay on delivery in Lagos</span><span>Easy swaps within 2 days</span>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">THE BAG</div>
+    <nav aria-label="Page links">
+      <a href="#bags">Bags</a>
+      <a href="#order">Order</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+</div>
+
+<section class="hero" style="padding-top:44px">
+  <div class="wrap">
+    <small>Lagos · Bags for every day</small>
+    <h1>THE<span>BAG</span></h1>
+    <p>Carry your style. Totes, crossbody bags, backpacks and clutches, picked for how good they look and how long they last.</p>
+    <a class="btn" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order on Telegram</a>
+    <div class="facts">
+      <span><b>6</b> styles</span>
+      <span><b>Same-week</b> delivery</span>
+      <span><b>Pay</b> on delivery in Lagos</span>
+    </div>
+    <svg class="hero-art" viewBox="0 0 200 190" role="img" aria-label="A white tote bag">
+      <ellipse cx="100" cy="182" rx="70" ry="7" fill="#ffffff" opacity=".12"/>
+      <path d="M62 62 C62 6 138 6 138 62" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M32 66 H168 L180 176 H20 Z" fill="#ffffff"/>
+      <path d="M32 66 H168" stroke="#0b0b0b" stroke-width="4"/>
+      <rect x="84" y="96" width="32" height="12" rx="3" fill="#0b0b0b"/>
+      <path d="M44 150 H156" stroke="#0b0b0b" stroke-width="3" stroke-dasharray="6 7"/>
+    </svg>
+  </div>
+</section>
+
+<div class="wrap">
+  <section id="bags">
+    <h2 class="reveal">Our bags</h2>
+    <p class="lead reveal">Pick a colour, tap order on the bag you like, and we confirm it the same day.</p>
+    <div class="chips reveal" role="group" aria-label="Filter bags by colour">
+      <button class="chip" type="button" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-f="black" aria-pressed="false">Black</button>
+      <button class="chip" type="button" data-f="white" aria-pressed="false">White</button>
+    </div>
+    <div class="grid" id="grid">
+
+      <div class="bag reveal" data-c="black">
+        <div class="pic"><span class="tag">Best seller</span>
+          <img src="city-tote.jpg" alt="City Tote, black" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>City Tote</h3>
+        <div class="row"><span>Black</span><span class="price">₦28,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+      <div class="bag reveal" data-c="white">
+        <div class="pic"><span class="tag">New</span>
+          <img src="cross-mini.jpg" alt="Cross Mini, white" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>Cross Mini</h3>
+        <div class="row"><span>White</span><span class="price">₦22,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+      <div class="bag reveal" data-c="black">
+        <div class="pic">
+          <img src="day-pack.jpg" alt="Day Pack, black" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>Day Pack</h3>
+        <div class="row"><span>Black</span><span class="price">₦35,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+      <div class="bag reveal" data-c="white">
+        <div class="pic">
+          <img src="evening-clutch.jpg" alt="Evening Clutch, white" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>Evening Clutch</h3>
+        <div class="row"><span>White</span><span class="price">₦18,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+      <div class="bag reveal" data-c="black">
+        <div class="pic"><span class="tag">New</span>
+          <img src="bucket-bag.jpg" alt="Bucket Bag, black" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>Bucket Bag</h3>
+        <div class="row"><span>Black</span><span class="price">₦26,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+      <div class="bag reveal" data-c="white">
+        <div class="pic">
+          <img src="shoulder-classic.jpg" alt="Shoulder Classic, white" loading="lazy" width="800" height="1000">
+        </div>
+        <h3>Shoulder Classic</h3>
+        <div class="row"><span>White</span><span class="price">₦30,000</span></div>
+        <a class="order" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Order this bag</a>
+      </div>
+
+    </div>
+    <p class="hint">Example bags and prices. More colours and sizes available, just ask.</p>
+  </section>
+
+  <section id="why">
+    <h2 class="reveal">Why shop with us</h2>
+    <p class="lead reveal">Simple promises we keep.</p>
+    <div class="why reveal">
+      <div><b>01</b><span><strong>Good quality.</strong> Strong stitching and zips we test before they reach you.</span></div>
+      <div><b>02</b><span><strong>Delivery in Lagos and nationwide.</strong> We pack carefully and send the same week.</span></div>
+      <div><b>03</b><span><strong>Easy swaps.</strong> If the bag is not what you ordered, tell us within 2 days.</span></div>
+    </div>
+  </section>
+
+  <section id="order">
+    <h2 class="reveal">How to order</h2>
+    <p class="lead reveal">Three easy steps.</p>
+    <ol class="steps reveal">
+      <li><span>Pick the bag you like and tap <strong>Order this bag</strong>.</span></li>
+      <li><span>Telegram opens. Tell us the bag and your area, then send.</span></li>
+      <li><span>Pay by bank transfer, or on delivery in Lagos, and we bring it to your door.</span></li>
+    </ol>
+  </section>
+
+  <section id="faq" class="faq">
+    <h2 class="reveal">Questions</h2>
+    <p class="lead reveal">Tap a question to open it.</p>
+    <div class="reveal">
+      <details><summary>How long does delivery take?</summary><p>Lagos orders usually arrive in 1 to 2 days. Other states take 3 to 5 days.</p></details>
+      <details><summary>Can I pay when the bag arrives?</summary><p>Yes, in Lagos. For other states, we ask for payment by bank transfer first.</p></details>
+      <details><summary>What if it is not the bag I ordered?</summary><p>Message us within 2 days with a photo, and we swap it.</p></details>
+      <details><summary>Do you have other colours?</summary><p>Yes. Ask on Telegram and we will show you what is in stock.</p></details>
+    </div>
+  </section>
+</div>
+
+<div class="contact" id="contact">
+  <div class="wrap">
+    <h2>Say hello</h2>
+    <p>Ask about colours, sizes and delivery to your area.</p>
+    <span class="num">@buildmysite_ng</span>
+    <a class="btn" href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Chat on Telegram</a>
+    <p style="margin-top:20px">Lagos, Nigeria · Open Monday to Saturday, 9am to 7pm</p>
+  </div>
+</div>
+
+<div class="wrap"><footer>© The Bag · Sample website · Not a real business<br>Website by <a href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Build My Site NG</a> · t.me/buildmysite_ng</footer></div>
+
+<div class="bar">
+  <span>Ready to order?<br>We reply the same day.</span>
+  <a href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Message us</a>
+</div>
+
+<script>
+// Filter buttons: show only the bags of the chosen colour.
+(function () {
+  var chips = document.querySelectorAll('.chip');
+  var bags = document.querySelectorAll('.bag');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var f = chip.getAttribute('data-f');
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      bags.forEach(function (b) { b.hidden = !(f === 'all' || b.getAttribute('data-c') === f); });
+    });
+  });
+
+  // Slide-in: items start hidden only when the browser can watch scrolling, and show when they come into view.
+  if ('IntersectionObserver' in window) {
+    document.documentElement.classList.add('js');
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>
