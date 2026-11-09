@@ -47,6 +47,10 @@ button.main:disabled { opacity: .5; cursor: wait; }
 .item button.sold { background: var(--ink); color: var(--cream); }
 .hint { color: var(--muted); font-size: 14px; margin: 6px 0 0; font-weight: 400; }
 button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 12px; font: 700 16px var(--f-body); cursor: pointer; }
+.xthumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.xthumbs div { position: relative; width: 64px; height: 64px; }
+.xthumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: var(--sand); }
+.xthumbs button { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; font: 800 12px/1 var(--f-body); cursor: pointer; padding: 0; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -86,6 +90,11 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
       <label for="photo" id="photoLabel">Photo</label>
       <input id="photo" type="file" accept="image/*" required>
       <img id="preview" class="preview" alt="Photo preview">
+
+      <label for="more">More photos of the same pair (optional)</label>
+      <input id="more" type="file" accept="image/*" multiple>
+      <p class="hint">Other angles or colours, up to 5. Customers see them when they tap the shoe.</p>
+      <div class="xthumbs" id="xthumbs"></div>
 
       <label for="name">Name</label>
       <input id="name" type="text" maxlength="60" required placeholder="For example, Air Runner">
@@ -178,6 +187,34 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
   }
 
   var editing = null;
+  var extra = [];      // extra photo links this pair already has (edit mode)
+  var removedExtra = [];
+  var MAX_EXTRA = 5;
+
+  function renderExtra() {
+    var box = $('xthumbs'); box.innerHTML = '';
+    extra.forEach(function (u, i) {
+      var d = document.createElement('div');
+      var im = document.createElement('img'); im.src = u; im.alt = 'Extra photo ' + (i + 1);
+      var x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Remove this photo');
+      x.addEventListener('click', function () { removedExtra.push(u); extra.splice(i, 1); renderExtra(); });
+      d.appendChild(im); d.appendChild(x); box.appendChild(d);
+    });
+  }
+  function extraOf(b) {
+    var e = b.images;
+    if (typeof e === 'string') { try { e = JSON.parse(e); } catch (err) { e = []; } }
+    return Array.isArray(e) ? e.slice() : [];
+  }
+  function uploadPhoto(file) {
+    return shrink(file).then(function (blob) {
+      var path = 'shoes-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+      return sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type || 'image/jpeg' }).then(function (up) {
+        if (up.error) throw up.error;
+        return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      });
+    });
+  }
 
   function removeFile(url) {
     var part = url ? url.split('/' + BUCKET + '/')[1] : null;
@@ -185,7 +222,7 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
   }
 
   function stopEdit() {
-    editing = null;
+    editing = null; extra = []; removedExtra = []; renderExtra();
     $('addForm').reset();
     $('photo').required = true;
     $('preview').style.display = 'none';
@@ -196,7 +233,7 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
   }
 
   function startEdit(b) {
-    editing = b;
+    editing = b; extra = extraOf(b); removedExtra = []; renderExtra();
     $('name').value = b.name || '';
     $('price').value = b.price || '';
     $('colour').value = b.colour || '';
@@ -219,6 +256,8 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
   $('addForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var file = $('photo').files[0];
+    var moreFiles = Array.prototype.slice.call($('more').files || []);
+    if (extra.length + moreFiles.length > MAX_EXTRA) { say($('addMsg'), 'You can add up to ' + MAX_EXTRA + ' extra photos.', 'bad'); return; }
     var price = parseInt($('price').value, 10);
     if (!file && !editing) { say($('addMsg'), 'Please choose a photo.', 'bad'); return; }
     if (!(price > 0)) { say($('addMsg'), 'Please type a price.', 'bad'); return; }
@@ -231,28 +270,30 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
     var getUrl;
     if (file) {
       say($('addMsg'), 'Uploading photo…');
-      getUrl = shrink(file).then(function (blob) {
-        var path = 'shoes-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-        return sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type || 'image/jpeg' }).then(function (up) {
-          if (up.error) throw up.error;
-          return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-        });
-      });
+      getUrl = uploadPhoto(file);
     } else {
       getUrl = Promise.resolve(oldUrl);
     }
 
+    var mainUrl;
     getUrl.then(function (url) {
+      mainUrl = url;
+      if (!moreFiles.length) return [];
+      say($('addMsg'), 'Uploading extra photos…');
+      return Promise.all(moreFiles.map(uploadPhoto));
+    }).then(function (newUrls) {
       say($('addMsg'), 'Saving…');
       var rec = {
         name: $('name').value.trim(), price: price, colour: $('colour').value.trim(),
         category: $('category').value, sizes: sizes,
-        tag: $('tag').value || null, note: $('note').value.trim() || null, image_url: url
+        tag: $('tag').value || null, note: $('note').value.trim() || null, image_url: mainUrl,
+        images: extra.concat(newUrls)
       };
       return wasEditing ? sb.from(TABLE).update(rec).eq('id', editing.id) : sb.from(TABLE).insert(rec);
     }).then(function (r) {
       if (r.error) throw r.error;
       if (wasEditing && file) removeFile(oldUrl);
+      removedExtra.forEach(removeFile);
       stopEdit();
       say($('addMsg'), wasEditing ? 'Updated. Your website shows the change.' : 'Saved. It is now on your website.', 'ok');
       loadList();
@@ -273,7 +314,8 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
 
         var mid = document.createElement('div');
         var nm = document.createElement('b'); nm.textContent = b.name;
-        var sub = document.createElement('span'); sub.textContent = [b.colour, money(b.price)].filter(Boolean).join(' · ');
+        var nExtra = extraOf(b).length;
+        var sub = document.createElement('span'); sub.textContent = [b.colour, money(b.price), nExtra ? '+' + nExtra + ' photos' : ''].filter(Boolean).join(' · ');
         var sz = document.createElement('span'); sz.textContent = 'Sizes: ' + (b.sizes || 'none');
         var st = document.createElement('span'); st.className = 'state'; st.textContent = b.sold_out ? 'Sold out' : 'In stock';
         mid.appendChild(nm); mid.appendChild(sub); mid.appendChild(sz); mid.appendChild(st); row.appendChild(mid);
@@ -304,7 +346,7 @@ button.ghost { width: 100%; margin-top: 10px; padding: 13px; background: #fff; c
           del.disabled = true; del.textContent = '…';
           sb.from(TABLE).delete().eq('id', b.id).then(function (d) {
             if (d.error) { del.disabled = false; del.textContent = 'Delete'; return; }
-            removeFile(b.image_url);
+            removeFile(b.image_url); extraOf(b).forEach(removeFile);
             loadList();
           });
         });

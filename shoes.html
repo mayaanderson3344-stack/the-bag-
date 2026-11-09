@@ -121,6 +121,27 @@ footer a { color: inherit; text-decoration: underline; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes float { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-12px) rotate(1deg); } }
 .msg { color: var(--muted); font-size: 15px; margin: 10px 0 0; }
+
+.pic { cursor: pointer; }
+.photos { position: absolute; right: 8px; bottom: 8px; background: rgba(21,21,21,.85); color: #fff; font: 700 11px var(--f-body); padding: 5px 9px; border-radius: 999px; }
+.shoe h3 { cursor: pointer; }
+.sheet { position: fixed; inset: 0; background: rgba(21,21,21,.62); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet[hidden] { display: none; }
+.sheet-card { position: relative; background: var(--cream); width: 100%; max-width: 560px; max-height: 94vh; overflow-y: auto; border: 2px solid var(--ink); border-bottom: 0; border-radius: 22px 22px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.close { position: sticky; top: 0; float: right; margin: -4px -4px 8px 8px; width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--ink); background: #fff; font: 800 18px var(--f-body); cursor: pointer; z-index: 2; }
+.sheet-main { position: relative; aspect-ratio: 1 / 1; background: var(--sand); border-radius: 14px; overflow: hidden; clear: both; }
+.sheet-main img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet-card.soldout .sheet-main img { filter: grayscale(1); opacity: .55; }
+.sheet-card .soldmark { display: none; }
+.sheet-card.soldout .soldmark { display: grid; }
+.thumbs { display: flex; gap: 8px; margin: 10px 0 0; overflow-x: auto; padding-bottom: 4px; }
+.thumbs button { flex: 0 0 auto; width: 64px; height: 64px; padding: 0; border: 2px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--sand); cursor: pointer; }
+.thumbs button[aria-current="true"] { border-color: var(--orange); }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet-info h3 { font: 800 26px/1.1 var(--f-display); letter-spacing: -.02em; margin: 14px 0 4px; cursor: default; }
+.sheet-info .meta { margin: 0; font-size: 15px; }
+.sheet-info .price { font-size: 24px; }
+body.lock { overflow: hidden; }
 </style>
 </head>
 <body>
@@ -209,6 +230,15 @@ footer a { color: inherit; text-decoration: underline; }
   <a href="https://t.me/buildmysite_ng" target="_blank" rel="noopener">Message us</a>
 </div>
 
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-label="Shoe photos and sizes">
+  <div class="sheet-card" id="sheetCard">
+    <button class="close" id="sheetClose" type="button" aria-label="Close">✕</button>
+    <div class="sheet-main"><img id="sheetImg" alt=""><div class="soldmark"><span>SOLD OUT</span></div></div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="sheet-info" id="sheetInfo"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script>
@@ -235,58 +265,124 @@ footer a { color: inherit; text-decoration: underline; }
     return 'https://t.me/' + ORDER_TG + '?text=' + encodeURIComponent(text);
   }
 
+  function photosOf(p) {
+    var extra = p.images;
+    if (typeof extra === 'string') { try { extra = JSON.parse(extra); } catch (e) { extra = []; } }
+    if (!Array.isArray(extra)) extra = [];
+    return [p.image_url].concat(extra).filter(Boolean);
+  }
+
+  // Sizes + order button. Used on the card and in the photo sheet, each with its own chosen size.
+  function orderBlock(p, box) {
+    var a = document.createElement('a');
+    a.className = 'order'; a.target = '_blank'; a.rel = 'noopener';
+    if (p.sold_out) {
+      a.textContent = 'Sold out'; a.setAttribute('aria-disabled', 'true');
+      box.appendChild(a); return;
+    }
+    a.textContent = 'Choose a size'; a.setAttribute('aria-disabled', 'true');
+    var list = sizeList(p.sizes);
+    if (list.length) {
+      var row = document.createElement('div'); row.className = 'sizes'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Sizes for ' + p.name);
+      list.forEach(function (s) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'size'; b.textContent = s; b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', function () {
+          row.querySelectorAll('.size').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+          a.href = orderLink(p, s);
+          a.textContent = 'Order size ' + s + ' on Telegram';
+          a.removeAttribute('aria-disabled');
+        });
+        row.appendChild(b);
+      });
+      box.appendChild(row);
+    } else {
+      a.textContent = 'Ask about sizes'; a.href = 'https://t.me/' + ORDER_TG; a.removeAttribute('aria-disabled');
+    }
+    box.appendChild(a);
+  }
+
   function card(p) {
     var d = document.createElement('div');
     d.className = 'shoe' + (p.sold_out ? ' soldout' : '');
     d.setAttribute('data-c', String(p.category || '').toLowerCase());
+    var photos = photosOf(p);
 
     var pic = document.createElement('div'); pic.className = 'pic';
-    if (p.image_url) {
+    pic.setAttribute('role', 'button'); pic.setAttribute('tabindex', '0');
+    pic.setAttribute('aria-label', 'See photos of ' + p.name);
+    if (photos[0]) {
       var im = document.createElement('img');
-      im.src = p.image_url; im.alt = p.name + (p.colour ? ', ' + p.colour : ''); im.loading = 'lazy';
+      im.src = photos[0]; im.alt = p.name + (p.colour ? ', ' + p.colour : ''); im.loading = 'lazy';
       pic.appendChild(im);
     }
     if (p.tag && !p.sold_out) { var t = document.createElement('span'); t.className = 'tag'; t.textContent = p.tag; pic.appendChild(t); }
     var sm = document.createElement('div'); sm.className = 'soldmark';
     var sp = document.createElement('span'); sp.textContent = 'SOLD OUT'; sm.appendChild(sp); pic.appendChild(sm);
+    if (photos.length > 1) { var ph = document.createElement('span'); ph.className = 'photos'; ph.textContent = photos.length + ' photos'; pic.appendChild(ph); }
+    function open() { openSheet(p); }
+    pic.addEventListener('click', open);
+    pic.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
     d.appendChild(pic);
 
-    var h = document.createElement('h3'); h.textContent = p.name; d.appendChild(h);
+    var h = document.createElement('h3'); h.textContent = p.name; h.addEventListener('click', open); d.appendChild(h);
     var meta = document.createElement('div'); meta.className = 'meta';
     var c = document.createElement('span'); c.textContent = p.colour || '';
     var pr = document.createElement('span'); pr.className = 'price'; pr.textContent = money(p.price);
     meta.appendChild(c); meta.appendChild(pr); d.appendChild(meta);
     if (p.note) { var n = document.createElement('p'); n.className = 'note'; n.textContent = p.note; d.appendChild(n); }
-
-    var a = document.createElement('a');
-    a.className = 'order'; a.target = '_blank'; a.rel = 'noopener';
-
-    if (p.sold_out) {
-      a.textContent = 'Sold out'; a.setAttribute('aria-disabled', 'true');
-    } else {
-      a.textContent = 'Choose a size'; a.setAttribute('aria-disabled', 'true');
-      var list = sizeList(p.sizes);
-      if (list.length) {
-        var row = document.createElement('div'); row.className = 'sizes'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Sizes for ' + p.name);
-        list.forEach(function (s) {
-          var b = document.createElement('button');
-          b.type = 'button'; b.className = 'size'; b.textContent = s; b.setAttribute('aria-pressed', 'false');
-          b.addEventListener('click', function () {
-            row.querySelectorAll('.size').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
-            a.href = orderLink(p, s);
-            a.textContent = 'Order size ' + s + ' on Telegram';
-            a.removeAttribute('aria-disabled');
-          });
-          row.appendChild(b);
-        });
-        d.appendChild(row);
-      } else {
-        a.textContent = 'Ask about sizes'; a.href = 'https://t.me/' + ORDER_TG; a.removeAttribute('aria-disabled');
-      }
-    }
-    d.appendChild(a);
+    orderBlock(p, d);
     return d;
   }
+
+  // The photo sheet: tap a pair to see all its photos, sizes and the order button
+  var sheet = document.getElementById('sheet');
+  var sheetCard = document.getElementById('sheetCard');
+  var sheetImg = document.getElementById('sheetImg');
+  var thumbs = document.getElementById('thumbs');
+  var sheetInfo = document.getElementById('sheetInfo');
+  var lastFocus = null;
+
+  function openSheet(p) {
+    var photos = photosOf(p);
+    lastFocus = document.activeElement;
+    sheetCard.className = 'sheet-card' + (p.sold_out ? ' soldout' : '');
+    function show(i) {
+      sheetImg.src = photos[i] || '';
+      sheetImg.alt = p.name + ', photo ' + (i + 1) + ' of ' + photos.length;
+      thumbs.querySelectorAll('button').forEach(function (b, k) { b.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+    }
+    thumbs.innerHTML = '';
+    if (photos.length > 1) {
+      photos.forEach(function (u, i) {
+        var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Photo ' + (i + 1));
+        var im = document.createElement('img'); im.src = u; im.alt = ''; b.appendChild(im);
+        b.addEventListener('click', function () { show(i); });
+        thumbs.appendChild(b);
+      });
+    }
+    sheetInfo.innerHTML = '';
+    var h = document.createElement('h3'); h.textContent = p.name; sheetInfo.appendChild(h);
+    var meta = document.createElement('div'); meta.className = 'meta';
+    var c = document.createElement('span'); c.textContent = [p.colour, p.category].filter(Boolean).join(' · ');
+    var pr = document.createElement('span'); pr.className = 'price'; pr.textContent = money(p.price);
+    meta.appendChild(c); meta.appendChild(pr); sheetInfo.appendChild(meta);
+    if (p.note) { var n = document.createElement('p'); n.className = 'note'; n.textContent = p.note; sheetInfo.appendChild(n); }
+    orderBlock(p, sheetInfo);
+    show(0);
+    sheet.hidden = false;
+    document.body.classList.add('lock');
+    sheetCard.scrollTop = 0;
+    document.getElementById('sheetClose').focus();
+  }
+  function closeSheet() {
+    sheet.hidden = true;
+    document.body.classList.remove('lock');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.getElementById('sheetClose').addEventListener('click', closeSheet);
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
 
   function buildChips(products) {
     chips.innerHTML = '';
